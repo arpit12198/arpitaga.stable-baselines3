@@ -214,6 +214,7 @@ class TD3(OffPolicyAlgorithm):
         self: SelfTD3,
         total_timesteps: int,
         callback: MaybeCallback = None,
+        exploration_callack = None, 
         log_interval: int = 4,
         tb_log_name: str = "TD3",
         reset_num_timesteps: bool = True,
@@ -222,6 +223,7 @@ class TD3(OffPolicyAlgorithm):
         return super().learn(
             total_timesteps=total_timesteps,
             callback=callback,
+            exploration_callack=exploration_callack,
             log_interval=log_interval,
             tb_log_name=tb_log_name,
             reset_num_timesteps=reset_num_timesteps,

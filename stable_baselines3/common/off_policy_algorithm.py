@@ -293,6 +293,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         self: SelfOffPolicyAlgorithm,
         total_timesteps: int,
         callback: MaybeCallback = None,
+        exploration_callback = None,
         log_interval: int = 4,
         tb_log_name: str = "run",
         reset_num_timesteps: bool = True,
@@ -314,6 +315,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
                 train_freq=self.train_freq,
                 action_noise=self.action_noise,
                 callback=callback,
+                exploration_callback = exploration_callback,
                 learning_starts=self.learning_starts,
                 replay_buffer=self.replay_buffer,
                 log_interval=log_interval,
@@ -343,9 +345,11 @@ class OffPolicyAlgorithm(BaseAlgorithm):
 
     def _sample_action(
         self,
+        vecEnv,
         learning_starts: int,
         action_noise: Optional[ActionNoise] = None,
         n_envs: int = 1,
+        exploration_callback = None,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Sample an action according to the exploration policy.
@@ -365,7 +369,10 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         # Select action randomly or according to policy
         if self.num_timesteps < learning_starts and not (self.use_sde and self.use_sde_at_warmup):
             # Warmup phase
-            unscaled_action = np.array([self.action_space.sample() for _ in range(n_envs)])
+            if exploration_callback is None:
+                unscaled_action = np.array([self.action_space.sample() for _ in range(n_envs)])
+            else:
+                unscaled_action = exploration_callback(vecEnv, self)
         else:
             # Note: when using continuous actions,
             # we assume that the policy uses tanh to scale the action
@@ -487,6 +494,7 @@ class OffPolicyAlgorithm(BaseAlgorithm):
         self,
         env: VecEnv,
         callback: BaseCallback,
+        exploration_callback,
         train_freq: TrainFreq,
         replay_buffer: ReplayBuffer,
         action_noise: Optional[ActionNoise] = None,
@@ -538,8 +546,8 @@ class OffPolicyAlgorithm(BaseAlgorithm):
                 self.actor.reset_noise(env.num_envs)
 
             # Select action randomly or according to policy
-            actions, buffer_actions = self._sample_action(learning_starts, action_noise, env.num_envs)
-
+            actions, buffer_actions = self._sample_action(env, learning_starts, action_noise, env.num_envs, exploration_callback=exploration_callback)
+            
             # Rescale and perform action
             new_obs, rewards, dones, infos = env.step(actions)
 

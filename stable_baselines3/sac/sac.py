@@ -299,6 +299,7 @@ class SAC(OffPolicyAlgorithm):
         self: SelfSAC,
         total_timesteps: int,
         callback: MaybeCallback = None,
+        exploration_callback = None,
         log_interval: int = 4,
         tb_log_name: str = "SAC",
         reset_num_timesteps: bool = True,
@@ -307,6 +308,7 @@ class SAC(OffPolicyAlgorithm):
         return super().learn(
             total_timesteps=total_timesteps,
             callback=callback,
+            exploration_callback = exploration_callback,
             log_interval=log_interval,
             tb_log_name=tb_log_name,
             reset_num_timesteps=reset_num_timesteps,
